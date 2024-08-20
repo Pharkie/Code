@@ -1,5 +1,7 @@
 from machine import UART, Pin
 
+import GalacticConfig
+
 # Initialize UART 0 on Pico B, TX pin is GP0 and RX pin is GP1
 test_uart2 = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))
 

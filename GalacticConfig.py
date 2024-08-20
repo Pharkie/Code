@@ -13,7 +13,7 @@ from picographics import PicoGraphics, DISPLAY_GALACTIC_UNICORN as DISPLAY  # ty
 from pimoroni_i2c import PimoroniI2C  # type: ignore
 
 # GU stuff
-gu = GalacticUnicorn()
+gu = GalacticUnicorn()  # Stops streamreader from working <<
 picoboard = PicoGraphics(DISPLAY)
 
 DISPLAY_WIDTH = 53

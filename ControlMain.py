@@ -9,42 +9,60 @@ License: GNU General Public License (GPL)
 
 # Micropython libs
 import sys
-import uasyncio
+import time
+import asyncio
 
 # My project
 import SharedUtils
+import SharedConfig
 
 
-async def listen_for_commands():
+# Function to send a command
+async def send_command(command: str):
+    """
+    Sends a command to the UART interface.
+
+    Args:
+        command (str): The command to be sent.
+    """
+
+    await SharedConfig.uart_swriter.awrite("{}\n".format(command))
+    print("Command sent:", command)
+
+    # SharedConfig.control_pico_uart.write(
+    #     command + "\n"
+    # )  # Append newline character to indicate end of command
+
+
+async def send_test_commands():
+    """
+    Asynchronously sends test commands to the UART interface in a loop.
+    """
     # Uses the uasyncio.StreamReader class to read input from the standard input asynchronously without blocking.
-    print("listen_for_commands() started")
-    reader = uasyncio.StreamReader(sys.stdin)
+    print("send_test_commands() started")
 
     while True:
         # Waits for a command and blocks the rest of this function, so need for sleep in this loop
-        command = await reader.readline()
-
-        print(f"Command received: {command.decode().strip()}")
-        if command == b"show-start\n":
-            print("Show start")
-        elif command == b"show-stop\n":
-            print("Show stop")
-        else:
-            print("Unknown command:", command.decode().strip())
+        print("Sending start command")
+        await send_command("show-start")
+        await asyncio.sleep(1)
+        print("Sending stop command")
+        await send_command("show-stop")
+        await asyncio.sleep(1)
 
 
 if __name__ == "__main__":
-    print("Control Start program")
+    print("Control program starting up...")
 
-    SharedUtils.connect_wifi()
+    # SharedUtils.connect_wifi()
+    uart_writer = asyncio.StreamWriter(SharedConfig.control_pico_uart, {})
 
-    # Add the attract tasks to the event loop. Creates vars that can be accessed in functions to cancel or restart.
-    command_task = uasyncio.create_task(listen_for_commands())
+    asyncio.create_task(send_test_commands())
 
     try:
-        uasyncio.get_event_loop().run_forever()
+        asyncio.get_event_loop().run_forever()
     except KeyboardInterrupt:
         pass
     finally:
         # Close the event loop
-        uasyncio.get_event_loop().close()
+        asyncio.get_event_loop().close()
