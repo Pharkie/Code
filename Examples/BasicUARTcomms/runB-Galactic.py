@@ -6,6 +6,8 @@ test_uart2 = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))
 # set up onboard LED
 led = Pin("LED", Pin.OUT)
 
+print("Galactic Pico starting up...")
+
 while True:
     # Check if anything is available in buffer
     if test_uart2.any():
