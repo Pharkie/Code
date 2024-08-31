@@ -1,8 +1,8 @@
 """
 Author: Adam Knowles
 Version: 0.1
-Name: config.py
-Description: Set up global config, variables and objects
+Name: galactic_config.py
+Description: Set up config, variables and objects relating to the Galactic Unicorn and PicoGraphics
 
 GitHub Repository: https://github.com/Pharkie/
 License: GNU General Public License (GPL)

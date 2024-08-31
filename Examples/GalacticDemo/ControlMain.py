@@ -8,13 +8,17 @@ License: GNU General Public License (GPL)
 """
 
 # Micropython libs
+from machine import UART, Pin
 import sys
 import time
 import asyncio
 
 # My project
-import SharedUtils
-import SharedConfig
+import shared_utils
+
+control_pico_uart = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))
+
+uart_swriter = asyncio.StreamWriter(control_pico_uart, {})
 
 
 # Function to send a command
@@ -26,12 +30,8 @@ async def send_command(command: str):
         command (str): The command to be sent.
     """
 
-    await SharedConfig.uart_swriter.awrite("{}\n".format(command))
+    await uart_swriter.awrite("{}\n".format(command))
     print("Command sent:", command)
-
-    # SharedConfig.control_pico_uart.write(
-    #     command + "\n"
-    # )  # Append newline character to indicate end of command
 
 
 async def send_test_commands():
@@ -43,19 +43,19 @@ async def send_test_commands():
 
     while True:
         # Waits for a command and blocks the rest of this function, so need for sleep in this loop
-        print("Sending start command")
-        await send_command("show-start")
+        # print("Sending start command")
+        await send_command("BOO")
         await asyncio.sleep(1)
-        print("Sending stop command")
-        await send_command("show-stop")
+        # print("Sending stop command")
+        await send_command("HISS")
         await asyncio.sleep(1)
 
 
 if __name__ == "__main__":
     print("Control program starting up...")
 
-    # SharedUtils.connect_wifi()
-    uart_writer = asyncio.StreamWriter(SharedConfig.control_pico_uart, {})
+    # shared_utils.connect_wifi()
+    uart_writer = asyncio.StreamWriter(control_pico_uart, {})
 
     asyncio.create_task(send_test_commands())
 

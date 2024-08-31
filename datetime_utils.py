@@ -14,7 +14,7 @@ import uasyncio
 import urandom  # type: ignore
 import machine  # type: ignore
 
-import SharedUtils
+import shared_utils
 
 
 def format_date(dt):
@@ -123,7 +123,7 @@ def get_time_values(current_time_tuple=None):
 def sync_rtc():
     # Assuming Wifi is already connected, sync RTC to NTP, then add an hour if it's DST and update the RTC
     # try:
-    if not SharedUtils.is_wifi_connected():
+    if not shared_utils.is_wifi_connected():
         raise Exception("Wi-Fi is not connected")
 
     ntptime.settime()

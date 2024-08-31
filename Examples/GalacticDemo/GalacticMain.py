@@ -11,9 +11,9 @@ License: GNU General Public License (GPL)
 import uasyncio
 
 # My project
-import SharedConfig
-import GalacticConfig
-import GalacticUtils
+import shared_config
+import galactic_Config
+import galactic_utils
 
 
 async def listen_for_commands():
@@ -22,7 +22,7 @@ async def listen_for_commands():
 
     while True:
         # Waits for a command and blocks the rest of this function, so need for sleep in this loop
-        received_text = await SharedConfig.uart_sreader.readline()
+        received_text = await shared_config.uart_sreader.readline()
         print(f"Command received: {received_text.decode().strip()}")
 
 

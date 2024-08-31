@@ -11,9 +11,7 @@ License: GNU General Public License (GPL)
 import network  # type: ignore
 import utime  # type: ignore
 
-import uasyncio
-
-import SharedConfig
+import shared_config
 
 
 def connect_wifi():
@@ -24,7 +22,7 @@ def connect_wifi():
     wlan.config(
         pm=0xA11140
     )  # Turn WiFi power saving off for some slow APs # type: ignore
-    wlan.connect(SharedConfig.WIFI_SSID, SharedConfig.WIFI_PASSWORD)  # type: ignore
+    wlan.connect(shared_config.WIFI_SSID, shared_config.WIFI_PASSWORD)  # type: ignore
 
     # clear_picoboard()
 
