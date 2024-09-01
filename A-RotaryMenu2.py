@@ -110,21 +110,19 @@ async def check_rotary():
             current_menu = get_current_menu_level(main_menu, current_path)
             menu_length = len(current_menu)
 
-            if len(current_path) == 1:
-                rotary_value_fixed = rotary.value()
-            else:
-                rotary_value_fixed = rotary.value() - current_path[-2][1]
+            rotary_value_fixed = (
+                rotary.value() % menu_length
+            )  # Wrap around rotary values
 
-            rotary_value_fixed %= menu_length  # Wrap around rotary values
+            if len(current_path) > 1:
+                rotary_value_fixed = rotary_value_fixed - current_path[-2][1]
 
             # print(
             #     f"Debug: Rotary Value Real {rotary.value()} Fixed: {rotary_value_fixed}"
             # )
             # print(f"Debug: Current Path: {current_path[-1][1]}")
 
-            if (
-                sw.value() == 0 and not button_pressed
-            ):  # If the button is pressed
+            if sw.value() == 0 and not button_pressed:
                 button_pressed = True
                 selected_option = list(current_menu.keys())[rotary_value_fixed]
 
@@ -138,11 +136,13 @@ async def check_rotary():
                         main_menu, current_path
                     )
 
-                    if len(current_path) == 1:
-                        rotary_value_fixed = rotary.value()
-                    else:
+                    rotary_value_fixed = (
+                        rotary.value() % menu_length
+                    )  # Wrap around rotary values
+
+                    if len(current_path) > 1:
                         rotary_value_fixed = (
-                            rotary.value() - current_path[-2][1]
+                            rotary_value_fixed - current_path[-2][1]
                         )
 
                     print(
@@ -151,10 +151,22 @@ async def check_rotary():
                 elif (
                     selected_option == "Back" and len(current_path) > 1
                 ):  # If 'Back' is selected
-                    if len(current_path) > 1:
-                        current_path.pop()
-                        # Reset the rotary value to the previous menu's selected index
-                        rotary_value_fixed = current_path[-1][1]
+                    current_path.pop()
+                    if current_path:  # Ensure current_path is not empty
+                        current_menu = get_current_menu_level(
+                            main_menu, current_path
+                        )
+                        menu_length = len(current_menu)
+
+                        rotary_value_fixed = (
+                            rotary.value() % menu_length
+                        )  # Wrap around rotary values
+
+                        if len(current_path) > 1:
+                            rotary_value_fixed = (
+                                rotary_value_fixed - current_path[-2][1]
+                            )
+
                         print(
                             f"Debug, Back selected, setting rotary_value_fixed to {rotary_value_fixed}"
                         )
@@ -169,11 +181,9 @@ async def check_rotary():
             elif sw.value() == 1:
                 button_pressed = False
 
-            if (
-                current_path[-1][1] != rotary_value_fixed
-            ):  # If the rotary value has changed
+            if current_path[-1][1] != rotary_value_fixed:
                 print(
-                    f"Debug: Fixed rotary value change from {current_path[-1][1]} to {rotary_value_fixed}"
+                    f"Debug: Rotary value change from {current_path[-1][1]} to {rotary_value_fixed}"
                 )
                 current_path[-1] = (current_path[-1][0], rotary_value_fixed)
                 print(f"Debug: Current Path: {current_path}")
