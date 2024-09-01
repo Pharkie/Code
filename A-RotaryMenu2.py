@@ -29,36 +29,6 @@ def print_function_name(func):
     return wrapper
 
 
-# Function to send a command
-async def send_gu_text(command: str):
-    """
-    Sends a command to the UART interface.
-
-    Args:
-        command (str): The command to be sent.
-    """
-
-    await uart_swriter.awrite("{}\n".format(command))
-    print("Sent text to GU:", command)
-
-
-async def send_gu_current_selection_text(menu, current_path):
-    """
-    Send the current menu item based on the selected index to the GUI.
-
-    Parameters:
-    menu (dict): The entire menu structure.
-    current_path (list): The current path in the menu.
-
-    Returns:
-    None
-    """
-    current_menu, selected_index = get_current_menu_level(menu, current_path)
-    menu_keys = list(current_menu.keys())
-    selected_item = menu_keys[selected_index]
-    await send_gu_text(selected_item)
-
-
 def add_back_to_menus(menu, depth=0):
     """
     Recursively adds a 'Back' option to each sub-menu, ensuring it is the last item.
@@ -76,22 +46,51 @@ def add_back_to_menus(menu, depth=0):
                 value["Back"] = None  # Add 'Back' option at the end
 
 
+# Function to send a command
+async def send_gu_text(text_to_send: str):
+    """
+    Sends a command to the UART interface.
+
+    Args:
+        command (str): The command to be sent.
+    """
+
+    await uart_swriter.awrite("{}\n".format(text_to_send))
+    print("Sent text to GU:", text_to_send)
+
+
 def get_current_menu_level(menu, current_path):
     """
-    Helper function to get the current menu level and selected index based on the current path.
+    Helper function to get the current menu level based on the current path.
 
     Parameters:
     menu (dict): The entire menu structure.
     current_path (list): The current path in the menu.
 
     Returns:
-    tuple: The current menu level and selected index.
+    dict: The current menu level.
     """
     current_menu = menu
     for level, _ in current_path[:-1]:
         current_menu = current_menu[level]
     current_level, selected_index = current_path[-1]
-    return current_menu[current_level], selected_index
+    return current_menu[current_level]
+
+
+async def send_gu_current_selection_text(menu, current_path):
+    """
+    Sends the current selection text to the GUI.
+
+    Parameters:
+    menu (dict): The entire menu structure.
+    current_path (list): The current path in the menu.
+    """
+    current_menu = get_current_menu_level(menu, current_path)
+    current_level, selected_index = current_path[-1]
+    selected_option = list(current_menu.keys())[selected_index]
+    # Send the selected option text to the GUI
+    # print(f"APKSelected Option: {selected_option}")
+    await send_gu_text(selected_option)
 
 
 async def check_rotary():
@@ -108,17 +107,27 @@ async def check_rotary():
 
     while True:
         try:
-            current_menu, saved_index = get_current_menu_level(
-                main_menu, current_path
-            )
+            current_menu = get_current_menu_level(main_menu, current_path)
             menu_length = len(current_menu)
-            val_new = (
-                rotary.value() % menu_length
-            )  # Ensure value is within menu length
+
+            if len(current_path) == 1:
+                rotary_value_fixed = rotary.value()
+            else:
+                rotary_value_fixed = rotary.value() - current_path[-2][1]
+
+            rotary_value_fixed = (
+                rotary_value_fixed % menu_length
+            )  # Wrap around rotary values
+
+            print(
+                f"Debug: Rotary Value Real {rotary.value()} Fixed: {rotary_value_fixed}"
+            )
+
+            print(f"Debug: Current Path: {current_path[-1][1]}")
 
             if sw.value() == 0 and not button_pressed:
                 button_pressed = True
-                selected_option = list(current_menu.keys())[val_new]
+                selected_option = list(current_menu.keys())[rotary_value_fixed]
 
                 if current_menu[
                     selected_option
@@ -126,34 +135,35 @@ async def check_rotary():
                     current_path.append(
                         (selected_option, 0)
                     )  # Start at the first item in the new sub-menu
-                    val_new = 0  # Reset val_new to 0 when entering a sub-menu
-                    # Recalculate val_new after changing the menu
-                    current_menu, saved_index = get_current_menu_level(
+
+                    # current_path[-1] = (current_path[-1][0], 0)
+
+                    if len(current_path) == 1:
+                        rotary_value_fixed = rotary.value()
+                    else:
+                        rotary_value_fixed = (
+                            rotary.value() - current_path[-2][1]
+                        )
+
+                    rotary_value_fixed = (
+                        rotary_value_fixed % menu_length
+                    )  # Wrap around rotary values
+
+                    print(
+                        f"Debug, Sub-menu selected, current Path: {current_path}"
+                    )
+
+                    await send_gu_current_selection_text(
                         main_menu, current_path
                     )
-                    menu_length = len(current_menu)
-                    val_new = (
-                        rotary.value() % menu_length
-                    )  # Ensure value is within menu length
                 elif selected_option == "Back":  # If 'Back' is selected
                     if len(current_path) > 1:
                         current_path.pop()
-                        # Use the saved index from the previous menu level
-                        current_menu, saved_index = get_current_menu_level(
-                            main_menu, current_path
+
+                        print(
+                            f"Debug, Back selected, setting val_new to {rotary_value_fixed}"
                         )
-                        val_new = saved_index
-                        # Recalculate val_new after changing the menu
-                        current_menu, saved_index = get_current_menu_level(
-                            main_menu, current_path
-                        )
-                        menu_length = len(current_menu)
-                        val_new = (
-                            rotary.value() % menu_length
-                        )  # Ensure value is within menu length
-                elif not current_menu[
-                    selected_option
-                ]:  # If the selected option is a leaf node
+                else:  # If the selected option is a leaf node
                     print(f"Execute: {selected_option}")
 
                 while sw.value() == 0:
@@ -161,13 +171,16 @@ async def check_rotary():
             elif sw.value() == 1:
                 button_pressed = False
 
-            if saved_index != val_new:
-                current_path[-1] = (current_path[-1][0], val_new)
-                await send_gu_current_selection_text(main_menu, current_path)
+            if current_path[-1][1] != rotary_value_fixed:
+                print(
+                    f"Debug: current_path[-1][1] != val_new. current_path[-1][1] {current_path[-1][0]} val_new: {rotary_value_fixed}"
+                )
+                current_path[-1] = (current_path[-1][0], rotary_value_fixed)
 
                 print(f"Debug: Current Path: {current_path}")
-                print(f"Debug: Current Menu: {list(current_menu.keys())}")
-                print(f"Debug: saved_index: {saved_index}, val_new: {val_new}")
+                # print(f"Debug: Current Menu: {list(current_menu.keys())}")
+
+                await send_gu_current_selection_text(main_menu, current_path)
 
             await asyncio.sleep(0.05)
         except KeyboardInterrupt:
@@ -191,7 +204,7 @@ def setup_rotary_encoder(dt_pin, clk_pin, sw_pin):
         pin_num_dt=dt_pin,
         pin_num_clk=clk_pin,
         min_val=0,
-        max_val=10,
+        max_val=99,  # Effectively sets max menu length
         reverse=False,
         range_mode=RotaryIRQ.RANGE_WRAP,
     )
