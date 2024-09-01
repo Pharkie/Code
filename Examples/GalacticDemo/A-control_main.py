@@ -14,7 +14,7 @@ import time
 import asyncio
 
 # My project
-import shared_utils
+import utils_shared
 
 control_pico_uart = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))
 
@@ -54,7 +54,7 @@ async def send_test_commands():
 if __name__ == "__main__":
     print("Control program starting up...")
 
-    shared_utils.connect_wifi()
+    utils_shared.connect_wifi()
     uart_writer = asyncio.StreamWriter(control_pico_uart, {})
 
     asyncio.create_task(send_test_commands())

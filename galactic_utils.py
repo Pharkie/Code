@@ -22,8 +22,6 @@ def clear_picoboard():
 
 
 def show_static_message(message, pen_colour, brightness=1.0):
-    # print(f"show_static_message() called with message: {message}, pen_colour: {pen_colour}, brightness: {brightness}")
-
     previous_brightness = galactic_config.gu.get_brightness()
     clear_picoboard()
 
@@ -37,8 +35,24 @@ def show_static_message(message, pen_colour, brightness=1.0):
     if text_width > galactic_config.DISPLAY_WIDTH:
         # Find the index of the space closest to the center of the message
         space_index = len(message) // 2
-        while message[space_index] != " ":
-            space_index += 1
+        left_space_index = message.rfind(" ", 0, space_index)
+        right_space_index = message.find(" ", space_index)
+
+        # Choose the closest space to the center
+        if left_space_index == -1 and right_space_index == -1:
+            # If no space is found, split the message at the center
+            space_index = len(message) // 2
+        elif left_space_index == -1:
+            space_index = right_space_index
+        elif right_space_index == -1:
+            space_index = left_space_index
+        else:
+            space_index = (
+                left_space_index
+                if (space_index - left_space_index)
+                <= (right_space_index - space_index)
+                else right_space_index
+            )
 
         # Split the message into two lines at the space index
         line1 = message[:space_index]
@@ -89,3 +103,29 @@ async def scroll_msg(msg_text):
         await uasyncio.sleep(0.03)
 
     # print("scroll_msg() complete")
+
+
+def main():
+    # Test clear_picoboard function
+    print("Testing clear_picoboard()")
+    clear_picoboard()
+    print("clear_picoboard() test complete")
+    utime.sleep(1)  # Delay for 1 second
+
+    # Test show_static_message function
+    print("Testing show_static_message()")
+    show_static_message(
+        "Hello World123456", galactic_config.PEN_GREEN, brightness=1
+    )
+    print("show_static_message() test complete")
+    utime.sleep(1)  # Delay for 1 second
+
+    # Test scroll_msg function
+    print("Testing scroll_msg()")
+    uasyncio.run(scroll_msg("Scrolling Message"))
+    print("scroll_msg() test complete")
+    utime.sleep(1)  # Delay for 1 second
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,30 @@
+{
+    "Main Menu": {
+        "Invite": {
+        },
+        "Select Player": {
+        },
+        "Play Ambience": {
+            "Forest": {},
+            "Space": {},
+            "Medieval": {}
+        },
+        "Quiz Question": {
+        },
+        "Start Countdown": {
+            "Set": {},
+            "Start": {}
+        },
+        "Play Silly Game": {
+            "Greta Says": {},
+            "Whack a Mole": {},
+            "Whack a Pair": {}
+        },
+        "Mystery?": {
+            "Extra point": {},
+            "Lose a point": {},
+            "Free drink": {},
+            "Get prize": {}
+        }
+    }
+}

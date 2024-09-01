@@ -1,12 +1,12 @@
 from machine import UART, Pin
 import uasyncio
 
-import shared_config
+import config_shared
 import galactic_config
 
 # Initialize UART
 # uart = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))
-uart = shared_config.display_pico_uart
+uart = config_shared.display_pico_uart
 
 
 async def test_uart():

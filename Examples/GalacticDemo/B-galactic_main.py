@@ -16,7 +16,7 @@ import uasyncio
 import galactic_config
 
 import datetime_utils
-import shared_utils
+import utils_shared
 import galactic_utils
 
 display_pico_uart = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))
@@ -47,7 +47,7 @@ async def listen_for_commands():
         received_text = received_text.decode().strip()
         print(f"Text received: {received_text}")
         galactic_utils.show_static_message(
-            received_text, galactic_config.PEN_BLUE, 0.2
+            received_text, galactic_config.PEN_BLUE, 1
         )
 
         # if received_text == b"1111show-start\n":
@@ -60,9 +60,9 @@ async def listen_for_commands():
 
 if __name__ == "__main__":
     print("Start program")
-    galactic_utils.show_static_message("Start", galactic_config.PEN_BLUE, 0.2)
+    galactic_utils.show_static_message("Start", galactic_config.PEN_BLUE, 1)
 
-    shared_utils.connect_wifi()
+    utils_shared.connect_wifi()
 
     # Add the attract tasks to the event loop. Creates vars that can be accessed in functions to cancel or restart.
     command_task = uasyncio.create_task(listen_for_commands())
