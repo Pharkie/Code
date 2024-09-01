@@ -115,17 +115,16 @@ async def check_rotary():
             else:
                 rotary_value_fixed = rotary.value() - current_path[-2][1]
 
-            rotary_value_fixed = (
-                rotary_value_fixed % menu_length
-            )  # Wrap around rotary values
+            rotary_value_fixed %= menu_length  # Wrap around rotary values
 
-            print(
-                f"Debug: Rotary Value Real {rotary.value()} Fixed: {rotary_value_fixed}"
-            )
+            # print(
+            #     f"Debug: Rotary Value Real {rotary.value()} Fixed: {rotary_value_fixed}"
+            # )
+            # print(f"Debug: Current Path: {current_path[-1][1]}")
 
-            print(f"Debug: Current Path: {current_path[-1][1]}")
-
-            if sw.value() == 0 and not button_pressed:
+            if (
+                sw.value() == 0 and not button_pressed
+            ):  # If the button is pressed
                 button_pressed = True
                 selected_option = list(current_menu.keys())[rotary_value_fixed]
 
@@ -135,8 +134,9 @@ async def check_rotary():
                     current_path.append(
                         (selected_option, 0)
                     )  # Start at the first item in the new sub-menu
-
-                    # current_path[-1] = (current_path[-1][0], 0)
+                    await send_gu_current_selection_text(
+                        main_menu, current_path
+                    )
 
                     if len(current_path) == 1:
                         rotary_value_fixed = rotary.value()
@@ -145,23 +145,21 @@ async def check_rotary():
                             rotary.value() - current_path[-2][1]
                         )
 
-                    rotary_value_fixed = (
-                        rotary_value_fixed % menu_length
-                    )  # Wrap around rotary values
-
                     print(
                         f"Debug, Sub-menu selected, current Path: {current_path}"
                     )
-
-                    await send_gu_current_selection_text(
-                        main_menu, current_path
-                    )
-                elif selected_option == "Back":  # If 'Back' is selected
+                elif (
+                    selected_option == "Back" and len(current_path) > 1
+                ):  # If 'Back' is selected
                     if len(current_path) > 1:
                         current_path.pop()
-
+                        # Reset the rotary value to the previous menu's selected index
+                        rotary_value_fixed = current_path[-1][1]
                         print(
-                            f"Debug, Back selected, setting val_new to {rotary_value_fixed}"
+                            f"Debug, Back selected, setting rotary_value_fixed to {rotary_value_fixed}"
+                        )
+                        await send_gu_current_selection_text(
+                            main_menu, current_path
                         )
                 else:  # If the selected option is a leaf node
                     print(f"Execute: {selected_option}")
@@ -171,15 +169,14 @@ async def check_rotary():
             elif sw.value() == 1:
                 button_pressed = False
 
-            if current_path[-1][1] != rotary_value_fixed:
+            if (
+                current_path[-1][1] != rotary_value_fixed
+            ):  # If the rotary value has changed
                 print(
-                    f"Debug: current_path[-1][1] != val_new. current_path[-1][1] {current_path[-1][0]} val_new: {rotary_value_fixed}"
+                    f"Debug: Fixed rotary value change from {current_path[-1][1]} to {rotary_value_fixed}"
                 )
                 current_path[-1] = (current_path[-1][0], rotary_value_fixed)
-
                 print(f"Debug: Current Path: {current_path}")
-                # print(f"Debug: Current Menu: {list(current_menu.keys())}")
-
                 await send_gu_current_selection_text(main_menu, current_path)
 
             await asyncio.sleep(0.05)
