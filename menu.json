@@ -3,7 +3,12 @@
         "Invite": null,
         "Select Player": null,
         "Play Ambience": {
-            "Forest": null,
+            "Forest": {
+                "Day": null,
+                "Night": null,
+                "Summer": null,
+                "Winter": null
+            },
             "Space": null,
             "Medieval": null
         },
