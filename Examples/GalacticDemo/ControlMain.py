@@ -54,7 +54,7 @@ async def send_test_commands():
 if __name__ == "__main__":
     print("Control program starting up...")
 
-    # shared_utils.connect_wifi()
+    shared_utils.connect_wifi()
     uart_writer = asyncio.StreamWriter(control_pico_uart, {})
 
     asyncio.create_task(send_test_commands())

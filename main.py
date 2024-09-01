@@ -28,19 +28,19 @@ async def listen_for_commands():
     print("listen_for_commands() started")
 
     while True:
-        # if galactic_config.gu.is_pressed(
-        #     galactic_config.GalacticUnicorn.SWITCH_BRIGHTNESS_UP
-        # ):
-        #     galactic_config.gu.adjust_brightness(+0.01)
-        #     galactic_config.gu.update(galactic_config.picoboard)
-        #     await uasyncio.sleep(0.01)
+        if galactic_config.gu.is_pressed(
+            galactic_config.GalacticUnicorn.SWITCH_BRIGHTNESS_UP
+        ):
+            galactic_config.gu.adjust_brightness(+0.01)
+            galactic_config.gu.update(galactic_config.picoboard)
+            await uasyncio.sleep(0.01)
 
-        # if galactic_config.gu.is_pressed(
-        #     galactic_config.GalacticUnicorn.SWITCH_BRIGHTNESS_DOWN
-        # ):
-        #     galactic_config.gu.adjust_brightness(-0.01)
-        #     galactic_config.gu.update(galactic_config.picoboard)
-        #     await uasyncio.sleep(0.01)
+        if galactic_config.gu.is_pressed(
+            galactic_config.GalacticUnicorn.SWITCH_BRIGHTNESS_DOWN
+        ):
+            galactic_config.gu.adjust_brightness(-0.01)
+            galactic_config.gu.update(galactic_config.picoboard)
+            await uasyncio.sleep(0.01)
 
         # Waits for a command and blocks the rest of this function, so no need for sleep in this loop
         received_text = await uart_sreader.readline()
