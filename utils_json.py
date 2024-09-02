@@ -13,6 +13,11 @@ from collections import OrderedDict
 def json_loads_ordered(raw_json):
     """
     Manually parse JSON and maintain the order of items.
+
+    Loading JSON respecting the order of items is against the formal JSON spec, but it's useful
+    for this project.
+    I tried to switch to YAML but there is no official support for it in MicroPython,
+    and writing one went less well than this JSON stuff.
     """
 
     def parse_json(data):
