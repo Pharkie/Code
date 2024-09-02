@@ -124,63 +124,23 @@ async def send_gu_current_selection_text(menu, current_path):
     await send_gu_text(selected_option)
 
 
-async def initialize_menu():
-    main_menu = utils_json.load_menu_from_json("menu.json")
-    modify_menu(main_menu)
-    return main_menu
-
-
-def initialize_rotary_encoder():
-    return setup_rotary_encoder(dt_pin=15, clk_pin=14, sw_pin=13)
-
-
-async def update_current_selection(main_menu, current_path, rotary):
+async def check_rotary(main_menu, current_path, rotary, sw, button_pressed):
     current_menu = get_current_menu_level(main_menu, current_path)
-    menu_length = len(current_menu)
 
-    rotary_value_this_menu = (
-        rotary.value() % menu_length
-    )  # Wrap around rotary values
+    rotary_value = rotary.value()
+    # print(f"Debug: Current rotary value: {rotary_value}")
 
-    if (
-        len(current_path) > 1
-    ):  # Counteract the offset caused by previous selection
-        rotary_value_fixed = (
-            rotary_value_this_menu - current_path[-2][1]
-        ) % menu_length
-    else:
-        rotary_value_fixed = rotary_value_this_menu
-
-    if current_path[-1][1] != rotary_value_fixed:
-        print(
-            f"Debug: Rotary value change from {current_path[-1][1]} to {rotary_value_fixed}"
-        )
-        current_path[-1] = (current_path[-1][0], rotary_value_fixed)
-        print(f"Debug: Current Path: {current_path}")
+    if current_path[-1][1] != rotary_value:
+        # print(
+        #     f"Debug: Rotary value change from {current_path[-1][1]} to {rotary_value}"
+        # )
+        current_path[-1] = (current_path[-1][0], rotary_value)
+        # print(f"Debug: Current Path: {current_path}")
         await send_gu_current_selection_text(main_menu, current_path)
-
-
-async def handle_button_press(
-    main_menu, current_path, rotary, sw, button_pressed
-):
-    current_menu = get_current_menu_level(main_menu, current_path)
-    menu_length = len(current_menu)
-    rotary_value_this_menu = (
-        rotary.value() % menu_length
-    )  # Wrap around rotary values
-
-    if (
-        len(current_path) > 1
-    ):  # Counteract the offset caused by previous selection
-        rotary_value_fixed = (
-            rotary_value_this_menu - current_path[-2][1]
-        ) % menu_length
-    else:
-        rotary_value_fixed = rotary_value_this_menu
 
     if sw.value() == 0 and not button_pressed:
         button_pressed = True
-        selected_option = list(current_menu.keys())[rotary_value_fixed]
+        selected_option = list(current_menu.keys())[rotary_value]
 
         if current_menu[
             selected_option
@@ -188,14 +148,30 @@ async def handle_button_press(
             current_path.append(
                 (selected_option, 0)
             )  # Start at the first item in the new sub-menu
+
+            current_menu = get_current_menu_level(main_menu, current_path)
+            menu_length = len(current_menu)
+            print(
+                f"Debug: SUBMENU, setting rotary value as 0, from 0 to {menu_length - 1}"
+            )
+            rotary.set(0, 0, 1, menu_length - 1)
+
             await send_gu_current_selection_text(main_menu, current_path)
-            print(f"Debug, Sub-menu selected, current Path: {current_path}")
+            # print(f"Debug, Sub-menu selected, current Path: {current_path}")
         elif (
             selected_option == "< Back" and len(current_path) > 1
         ):  # If 'Back' is selected
             current_path.pop()
+
+            current_menu = get_current_menu_level(main_menu, current_path)
+            menu_length = len(current_menu)
+            print(
+                f"Debug: BACK, setting rotary value as {current_path[-1][1]}, from 0 to {menu_length - 1}"
+            )
+            rotary.set(current_path[-1][1], 0, 1, menu_length - 1)
+
             await send_gu_current_selection_text(main_menu, current_path)
-            print(f"Debug, Back selected, current Path: {current_path}")
+            # print(f"Debug, Back selected, current Path: {current_path}")
         else:  # If the selected option is a leaf node
             print(f"Execute: {selected_option}")
 
@@ -208,19 +184,28 @@ async def handle_button_press(
 
 
 async def main_loop():
-    main_menu = await initialize_menu()
-    rotary, sw = initialize_rotary_encoder()
+    main_menu = utils_json.load_menu_from_json("menu.json")
+    modify_menu(main_menu)
+
+    rotary, sw = setup_rotary_encoder(dt_pin=15, clk_pin=14, sw_pin=13)
+
     current_path = [
         ("Main Menu >", 0)
-    ]  # Store tuples of (menu level, selected index)
+    ]  # Store tuples of (menu level, selected index, where final one is current selection)
     button_pressed = False
+
+    current_menu = get_current_menu_level(main_menu, current_path)
+    menu_length = len(current_menu)
+
+    # Set the rotary encoder
+    print(f"Debug: setting rotary value as 0, from 0 to {menu_length - 1}")
+    rotary.set(0, 0, 1, menu_length - 1)
 
     await send_gu_current_selection_text(main_menu, current_path)
 
     while True:
         try:
-            await update_current_selection(main_menu, current_path, rotary)
-            button_pressed = await handle_button_press(
+            await check_rotary(
                 main_menu, current_path, rotary, sw, button_pressed
             )
             await asyncio.sleep(0.05)
@@ -228,40 +213,12 @@ async def main_loop():
             break
 
 
-# Call the main loop
-asyncio.run(main_loop())
-
-
-def setup_rotary_encoder(dt_pin, clk_pin, sw_pin):
-    """
-    Sets up the rotary encoder and button.
-
-    Args:
-        dt_pin (int): Pin number for DT.
-        clk_pin (int): Pin number for CLK.
-        sw_pin (int): Pin number for the button switch.
-
-    Returns:
-        tuple: RotaryIRQ instance and button Pin instance.
-    """
-    sw = Pin(sw_pin, Pin.IN, Pin.PULL_UP)
-    rotary = RotaryIRQ(
-        pin_num_dt=dt_pin,
-        pin_num_clk=clk_pin,
-        min_val=0,
-        max_val=20,  # Effectively sets max menu length
-        reverse=False,
-        range_mode=RotaryIRQ.RANGE_WRAP,
-    )
-    return rotary, sw
-
-
 def main():
     print("Control program starting up...")
 
     utils_shared.connect_wifi()
 
-    asyncio.create_task(check_rotary())
+    asyncio.create_task(main_loop())
 
     try:
         asyncio.get_event_loop().run_forever()
