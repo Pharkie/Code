@@ -73,7 +73,7 @@ def run_demo(clk_pin, dio_pin):
     while True:
         for i in range(10000):
             tm.display([i // 1000 % 10, i // 100 % 10, i // 10 % 10, i % 10])
-            time.sleep(0.2)
+            time.sleep(0.05)
 
 
 # Example usage: configure pins 14 and 12
