@@ -9,7 +9,6 @@ License: GNU General Public License (GPL)
 
 # Micropython libs
 from machine import UART, Pin
-import time
 import asyncio
 from collections import OrderedDict
 
@@ -39,6 +38,19 @@ player_names = [
     "The wolf",  # 110
     "Pharkie",  # 111
 ]
+
+
+# Function to send a command
+async def send_gu_text(text_to_send: str):
+    """
+    Sends a command to the UART interface.
+
+    Args:
+        command (str): The command to be sent.
+    """
+
+    await uart_swriter.awrite("{}\n".format(text_to_send))
+    print("Sent text to GU:", text_to_send)
 
 
 def read_reed_switch(index):
@@ -73,8 +85,9 @@ async def main_loop():
         if current_states != previous_states:
             player_name = get_player_name(current_states)
             print(current_states, player_name)
+            await send_gu_text(player_name)
             previous_states = current_states
-        time.sleep(1)  # Small delay to debounce the switches
+        await asyncio.sleep(1)  # Small delay to debounce the switches
 
 
 def main():
